@@ -1,9 +1,16 @@
 import { faker } from "@faker-js/faker";
 import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat.js";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore.js";
 import Cryptr from "cryptr";
-import { CardInsertData, findByTypeAndEmployeeId, insert, TransactionTypes } from "../repositories/cardRepository.js";
-import { findByApiKey } from "../repositories/companyRepository.js"
-import { findById } from "../repositories/employeeRepository.js";
+import bcrypt from 'bcrypt';
+import * as cardRepository from "../repositories/cardRepository.js"
+import * as employeeRepository from "../repositories/employeeRepository.js";
+import * as companyRepository from "../repositories/companyRepository.js"
+dayjs.extend(customParseFormat);
+dayjs.extend(isSameOrBefore);
+
+const cryptr: Cryptr = new Cryptr(process.env.SECRET);
 
 function formatName(nameArray: string[]) {
     const newNameArray: string[] = nameArray.filter((value: string) => value.length > 2);
@@ -22,19 +29,19 @@ function formatName(nameArray: string[]) {
     return nameFormat.toUpperCase();
 }
 
-export async function createCard(type: TransactionTypes, employeeId: number ,apiKey: string | string[]) {
+export async function createCard(type: cardRepository.TransactionTypes, employeeId: number ,apiKey: string | string[]) {
 
-    const verifyCompany = await findByApiKey(apiKey);
+    const verifyCompany = await companyRepository.findByApiKey(apiKey);
     if(!verifyCompany) {
         throw { type: "companyNotFound" , message: "API key doesn't belong to a company" };
     }
 
-    const verifyEmployee = await findById(employeeId);
+    const verifyEmployee = await employeeRepository.findById(employeeId);
     if(!verifyEmployee) {
         throw { type: "employeeNotFound", message: "Unregistered employee" };
     }
 
-    const verifyTypeAndEmployee = await findByTypeAndEmployeeId(type, employeeId);
+    const verifyTypeAndEmployee = await cardRepository.findByTypeAndEmployeeId(type, employeeId);
     if(verifyTypeAndEmployee) {
         throw { type: "cardSameType", message: "this employee already has a card of this type"}
     }
@@ -44,10 +51,10 @@ export async function createCard(type: TransactionTypes, employeeId: number ,api
     const number: string = faker.finance.creditCardNumber();
     const expirationDate: string = dayjs().add(5, "year").format("MM/YY");
     const securityCode: string = faker.finance.creditCardCVV();
-    const cryptr = new Cryptr(process.env.SECRET);
+    console.log(securityCode);
     const encryptedSecurityCode: string = cryptr.encrypt(securityCode);
 
-    const card: CardInsertData = {
+    const card: cardRepository.CardInsertData = {
         employeeId,
         number,
         cardholderName,
@@ -59,6 +66,32 @@ export async function createCard(type: TransactionTypes, employeeId: number ,api
         isBlocked: false,
         type
     }
-    await insert(card);
-    return;
+    await cardRepository.insert(card);
+}
+
+export async function activateCard( securityCode: string, password: string, cardId: number) {
+    const verifyCard: cardRepository.Card = await cardRepository.findById(cardId);
+    if(!verifyCard) {
+        throw { type: "cardNotFound", message: "Unregistered card" };
+    }
+
+    const expirationDate = dayjs(verifyCard.expirationDate, "MM/YY");
+    const today = dayjs(dayjs(),"MM/YY")
+    const result: boolean = today.isSameOrBefore(expirationDate, "month");
+    if(result === false) {
+        throw { type: "cardExpired", message: "This card is expired" };
+    }
+
+    if(verifyCard.password !== null) {
+        throw { type: "cardActive", message: "This card is already Activate" };
+    } 
+
+    const decryptedSecurityCode: string = cryptr.decrypt(verifyCard.securityCode)
+    if(securityCode !== decryptedSecurityCode) {
+        throw { type: "securityCodeError", message: "Your security code is invalid" }
+    }
+
+    const encryptedPassword = bcrypt.hashSync(password, 10);
+
+    await cardRepository.update(cardId, { password: encryptedPassword });
 }
