@@ -1,4 +1,4 @@
-import { activateCardSchema, createCardSchema } from "../schemas/CardSchemas.js";
+import { activateCardSchema, createCardSchema, lockCardSchema } from "../schemas/CardSchemas.js";
 import { Request, Response, NextFunction } from "express";
 import { TransactionTypes } from "../repositories/cardRepository.js";
 
@@ -10,6 +10,8 @@ interface activateCardBody {
     securityCode: string,
     password: string
 }
+
+type lockCardBody = Omit<activateCardBody, "securityCode">
 
 export async function verifyCreateCard(req: Request<{ employeeId: string }, {}, { type: TransactionTypes }>, res: Response, next: NextFunction) {
     const apiKey: string | string[] | undefined = req.headers["x-api-key"];
@@ -31,6 +33,16 @@ export async function verifyActivateCard(req: Request, res: Response, next: Next
     const body: activateCardBody = req.body;
 
     const { error } = activateCardSchema.validate(body, {abortEarly: false});
+    if (error) {
+        return res.status(422).send(error.details);
+    }
+    next();
+}
+
+export async function verifyLockCard(req: Request, res: Response, next: NextFunction) {
+    const body: lockCardBody = req.body;
+
+    const { error } = lockCardSchema.validate(body, {abortEarly: false});
     if (error) {
         return res.status(422).send(error.details);
     }

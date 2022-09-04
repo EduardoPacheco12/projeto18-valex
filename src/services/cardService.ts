@@ -91,7 +91,40 @@ export async function activateCard( securityCode: string, password: string, card
         throw { type: "securityCodeError", message: "Your security code is invalid" }
     }
 
-    const encryptedPassword = bcrypt.hashSync(password, 10);
+    const encryptedPassword: string = bcrypt.hashSync(password, 10);
 
     await cardRepository.update(cardId, { password: encryptedPassword });
+}
+
+export async function lockUnlockCard(password: string, cardId: number, Lock: boolean) {
+    const verifyCard: cardRepository.Card = await cardRepository.findById(cardId);
+    if(!verifyCard) {
+        throw { type: "cardNotFound", message: "Unregistered card" };
+    }
+
+    const expirationDate = dayjs(verifyCard.expirationDate, "MM/YY");
+    const today = dayjs(dayjs(),"MM/YY")
+    const result: boolean = today.isSameOrBefore(expirationDate, "month");
+    if(result === false) {
+        throw { type: "cardExpired", message: "This card is expired" };
+    }
+
+    const verifyPassword: boolean = bcrypt.compareSync(password, verifyCard.password);
+    if(!verifyPassword) {
+        throw { type: "passwordError", message: "Your password is incorrect"}
+    }
+
+    if(Lock === true) {
+        if(verifyCard.isBlocked === true) {
+            throw { type: "lockError", message: "The card is already locked" }
+        }
+        await cardRepository.update(cardId, { isBlocked: true });
+    }
+    if(Lock === false) {
+        if(verifyCard.isBlocked === false) {
+            throw { type: "unlockError", message: "The card is already unlocked" }
+        }
+        await cardRepository.update(cardId, { isBlocked: false });
+    }
+
 }
