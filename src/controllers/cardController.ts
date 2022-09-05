@@ -10,8 +10,8 @@ export async function createCard(req: Request<{ employeeId: string }, {}, { type
     const apiKey: string | string[] = req.headers["x-api-key"];
 
     try {
-        await cardService.createCard(type, employeeId, apiKey);
-        return res.sendStatus(201);
+        const securityCode: string = await cardService.createCard(type, employeeId, apiKey);
+        return res.status(201).send(securityCode);
     } catch (error) {
         if(error.type === "companyNotFound" || "employeeNotFound") {
             return res.status(404).send(error.message);

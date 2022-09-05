@@ -47,13 +47,16 @@ O "cardId" passado na rota é o id do cartão criado.
 A resposta da requisição virá no seguinte formato:
 
 ```json
-"balance": 35000,
+{
+  "balance": 35000,
   "transactions": [
-		{ "id": 1, "cardId": 1, "businessId": 1, "businessName": "DrivenEats", "timestamp": "22/01/2022", "amount": 5000 }
-	]
+    { "id": 1, "cardId": 1, "businessId": 1, "businessName": "DrivenEats", "timestamp": "22/01/2022", "amount": 5000 }
+  ],
   "recharges": [
-		{ "id": 1, "cardId": 1, "timestamp": "21/01/2022", "amount": 40000 }
-	]
+    { "id": 1, "cardId": 1, "timestamp": "21/01/2022", "amount": 40000 }
+  ]
+}
+
 ```
 
 ## Rotas <span style="color:blue"> **PATCH** </span>/card/lock/:cardId e /unlock/:cardId

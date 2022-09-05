@@ -53,7 +53,6 @@ export async function createCard(type: cardRepository.TransactionTypes, employee
     const number: string = faker.finance.creditCardNumber();
     const expirationDate: string = dayjs().add(5, "year").format("MM/YY");
     const securityCode: string = faker.finance.creditCardCVV();
-    console.log(securityCode);
     const encryptedSecurityCode: string = cryptr.encrypt(securityCode);
 
     const card: cardRepository.CardInsertData = {
@@ -69,6 +68,8 @@ export async function createCard(type: cardRepository.TransactionTypes, employee
         type
     }
     await cardRepository.insert(card);
+
+    return securityCode;
 }
 
 export async function activateCard( securityCode: string, password: string, cardId: number) {
