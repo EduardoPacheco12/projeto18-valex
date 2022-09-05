@@ -4,7 +4,7 @@ import customParseFormat from "dayjs/plugin/customParseFormat.js";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore.js";
 import Cryptr from "cryptr";
 import bcrypt from 'bcrypt';
-import * as cardRepository from "../repositories/cardRepository.js"
+import * as cardRepository from "../repositories/cardRepository.js";
 import * as employeeRepository from "../repositories/employeeRepository.js";
 import * as companyRepository from "../repositories/companyRepository.js";
 import * as rechargeRepository from "../repositories/rechargeRepository.js";
@@ -156,7 +156,6 @@ export async function rechargeCard(amount: number, cardId: number, apiKey: strin
         cardId,
         amount
     }
-
     await rechargeRepository.insert(rechargeData);
 
 }

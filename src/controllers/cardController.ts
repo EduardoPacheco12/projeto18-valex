@@ -11,7 +11,7 @@ export async function createCard(req: Request<{ employeeId: string }, {}, { type
 
     try {
         await cardService.createCard(type, employeeId, apiKey);
-        res.sendStatus(201);
+        return res.sendStatus(201);
     } catch (error) {
         if(error.type === "companyNotFound" || "employeeNotFound") {
             return res.status(404).send(error.message);
@@ -20,7 +20,7 @@ export async function createCard(req: Request<{ employeeId: string }, {}, { type
             return res.status(401).send(error.message);
         }
 
-        res.status(400).send(error);
+        return res.status(400).send(error);
     }
 }
 

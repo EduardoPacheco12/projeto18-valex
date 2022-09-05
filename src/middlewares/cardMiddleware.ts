@@ -13,8 +13,6 @@ interface activateCardBody {
 
 type lockCardBody = Omit<activateCardBody, "securityCode">
 
-
-
 export async function verifyCreateCard(req: Request<{ employeeId: string }, {}, { type: TransactionTypes }>, res: Response, next: NextFunction) {
     const apiKey: string | string[] | undefined = req.headers["x-api-key"];
     const body: createCardBody = req.body;

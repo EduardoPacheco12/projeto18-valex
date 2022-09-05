@@ -2,6 +2,7 @@ import express, { json } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import cardRouter from  "./routes/cardRouter.js";
+import paymentRouter from "./routes/paymentRouter.js";
 
 dotenv.config();
 
@@ -11,6 +12,7 @@ server.use(cors());
 server.use(json());
 
 server.use(cardRouter);
+server.use(paymentRouter);
 
 const PORT: number = Number(process.env.PORT);
 
