@@ -90,3 +90,16 @@ export async function rechargeCard(req: Request, res: Response) {
         return res.status(400).send(error);
     }
 }
+
+export async function  getBalance(req: Request, res: Response) {
+    const cardId: number = Number(req.params.cardId);
+    try {
+        const result = await cardService.getBalance(cardId);
+        return res.status(200).send(result);
+    } catch (error) {
+        if(error.type === "cardNotFound") {
+            return res.status(404).send(error.message);
+        }
+        return res.status(400).send(error);
+    }
+}

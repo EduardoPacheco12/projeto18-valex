@@ -45,10 +45,9 @@ export async function paymentPOS(businessId: number, cardId: number, amount: num
     }
 
     const recharges = await rechargeRepository.findByCardId(cardId);
-    const totalRecharge = recharges.reduce((previousValue: number, currentValue: rechargeRepository.Recharge) => 
-    previousValue + currentValue.amount, 0)
+    const totalRecharge: number = recharges.reduce((previousValue: number, currentValue: rechargeRepository.Recharge) => previousValue + currentValue.amount, 0);
     const payments = await paymentRepository.findByCardId(cardId);
-    const totalPayments = payments.reduce((previousValue: number, currentValue: rechargeRepository.Recharge) => previousValue + currentValue.amount, 0);
+    const totalPayments: number = payments.reduce((previousValue: number, currentValue: rechargeRepository.Recharge) => previousValue + currentValue.amount, 0);
     const balance: number = totalRecharge - totalPayments;
     if(balance < amount) {
         throw { type: "balanceError", message: "Failed to perform transaction" };

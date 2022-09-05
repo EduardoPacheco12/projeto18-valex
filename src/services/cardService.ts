@@ -8,6 +8,7 @@ import * as cardRepository from "../repositories/cardRepository.js";
 import * as employeeRepository from "../repositories/employeeRepository.js";
 import * as companyRepository from "../repositories/companyRepository.js";
 import * as rechargeRepository from "../repositories/rechargeRepository.js";
+import * as paymentRepository from "../repositories/paymentRepository.js";
 dayjs.extend(customParseFormat);
 dayjs.extend(isSameOrBefore);
 
@@ -158,4 +159,22 @@ export async function rechargeCard(amount: number, cardId: number, apiKey: strin
     }
     await rechargeRepository.insert(rechargeData);
 
+}
+
+export async function getBalance(cardId: number) {
+    const verifyCard: cardRepository.Card = await cardRepository.findById(cardId);
+    if(!verifyCard) {
+        throw { type: "cardNotFound", message: "Unregistered card" };
+    }
+
+    const recharges = await rechargeRepository.findByCardId(cardId);
+    const totalRecharge: number = recharges.reduce((previousValue: number, currentValue: rechargeRepository.Recharge) => previousValue + currentValue.amount, 0);
+    const payments = await paymentRepository.findByCardId(cardId);
+    const totalPayments: number = payments.reduce((previousValue: number, currentValue: rechargeRepository.Recharge) => previousValue + currentValue.amount, 0);
+    const balance: number = totalRecharge - totalPayments;
+    return {
+        balance,
+        transactions: payments,
+        recharges: recharges
+    }
 }
