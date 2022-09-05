@@ -6,7 +6,8 @@ import Cryptr from "cryptr";
 import bcrypt from 'bcrypt';
 import * as cardRepository from "../repositories/cardRepository.js"
 import * as employeeRepository from "../repositories/employeeRepository.js";
-import * as companyRepository from "../repositories/companyRepository.js"
+import * as companyRepository from "../repositories/companyRepository.js";
+import * as rechargeRepository from "../repositories/rechargeRepository.js";
 dayjs.extend(customParseFormat);
 dayjs.extend(isSameOrBefore);
 
@@ -78,7 +79,7 @@ export async function activateCard( securityCode: string, password: string, card
     const expirationDate = dayjs(verifyCard.expirationDate, "MM/YY");
     const today = dayjs(dayjs(),"MM/YY")
     const result: boolean = today.isSameOrBefore(expirationDate, "month");
-    if(result === false) {
+    if(!result) {
         throw { type: "cardExpired", message: "This card is expired" };
     }
 
@@ -105,7 +106,7 @@ export async function lockUnlockCard(password: string, cardId: number, Lock: boo
     const expirationDate = dayjs(verifyCard.expirationDate, "MM/YY");
     const today = dayjs(dayjs(),"MM/YY")
     const result: boolean = today.isSameOrBefore(expirationDate, "month");
-    if(result === false) {
+    if(!result) {
         throw { type: "cardExpired", message: "This card is expired" };
     }
 
@@ -126,5 +127,36 @@ export async function lockUnlockCard(password: string, cardId: number, Lock: boo
         }
         await cardRepository.update(cardId, { isBlocked: false });
     }
+
+}
+
+export async function rechargeCard(amount: number, cardId: number, apiKey: string | string[]) {
+    const verifyCompany = await companyRepository.findByApiKey(apiKey);
+    if(!verifyCompany) {
+        throw { type: "companyNotFound" , message: "API key doesn't belong to a company" };
+    }
+
+    const verifyCard: cardRepository.Card = await cardRepository.findById(cardId);
+    if(!verifyCard) {
+        throw { type: "cardNotFound", message: "Unregistered card" };
+    }
+
+    if(!(verifyCard.password)) {
+        throw { type: "cardNotActive", message: "Card is not active" };
+    }
+
+    const expirationDate = dayjs(verifyCard.expirationDate, "MM/YY");
+    const today = dayjs(dayjs(),"MM/YY")
+    const result: boolean = today.isSameOrBefore(expirationDate, "month");
+    if(!result) {
+        throw { type: "cardExpired", message: "This card is expired" };
+    }
+
+    const rechargeData: rechargeRepository.RechargeInsertData = {
+        cardId,
+        amount
+    }
+
+    await rechargeRepository.insert(rechargeData);
 
 }

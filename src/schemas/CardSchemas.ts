@@ -12,3 +12,7 @@ export const activateCardSchema = joi.object({
 export const lockCardSchema = joi.object({
     password: joi.string().pattern(new RegExp("^[0-9]{4}")).length(4).required()
 })
+
+export const rechargeCardSchema = joi.object({
+    amount: joi.number().min(1).required()
+})

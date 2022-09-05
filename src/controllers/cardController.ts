@@ -31,7 +31,7 @@ export async function activateCard(req: Request, res: Response) {
 
     try {
         await cardService.activateCard(securityCode, password, cardId)
-        res.sendStatus(200);   
+        res.sendStatus(204);   
     } catch (error) {
         if(error.type === "cardNotFound") {
             return res.status(404).send(error.message);
@@ -58,7 +58,7 @@ export function lockUnlockCard(status: statusCard) {
         
         try {
             await cardService.lockUnlockCard(password, cardId, Lock);
-            return res.sendStatus(200);
+            return res.sendStatus(204);
         } catch (error) {
             if(error.type === "cardNotFound") {
                 return res.status(404).send(error.message);
@@ -70,4 +70,23 @@ export function lockUnlockCard(status: statusCard) {
         }
         
     }  
+}
+
+export async function rechargeCard(req: Request, res: Response) {
+    const amount: number = req.body.amount;
+    const cardId: number = Number(req.params.cardId);
+    const apiKey: string | string[] = req.headers["x-api-key"];
+
+    try {
+        await cardService.rechargeCard(amount, cardId, apiKey);
+        return res.sendStatus(200);
+    } catch (error) {
+        if(error.type === "companyNotFound" || "cardNotFound") {
+            return res.status(404).send(error.message);
+        }
+        if(error.type === "cardNotActive" || "cardExpired") {
+            return res.status(401).send(error.message);
+        }
+        return res.status(400).send(error);
+    }
 }
